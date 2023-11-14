@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require("cors");
 
 const Customer = require("./models/customer.model");
 
@@ -10,11 +11,12 @@ mongoose.set("strictQuery", false);
 if(process.env.NODE_ENV !== "production"){
     require("dotenv").config();
 }
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3200;
 const conn = process.env.CONNECTION;
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
+app.use(cors());
 
 const customer = new Customer({
     name: "Hero",
@@ -23,8 +25,9 @@ const customer = new Customer({
 
 app.get("/api/customers", async (req, res)=>{
     try{
-        const result = await Customer.find();
-        res.send(result);
+        const customers = await Customer.find();
+        console.log(customers);
+        res.status(200).json({customers});
     }catch(ex){
         res.status(500).json({error: ex.message});
     }
@@ -32,21 +35,24 @@ app.get("/api/customers", async (req, res)=>{
 
 app.get("/api/customers/:id", async(req, res) => {
     try{
-        const customerID = req.params;
-        const customer = await Customer.findById(customerID);
+        const customerID = req.params.id;
+        const customer = await Customer.findById({_id:customerID});
+        
 
-        if(customer != null || !undefined){
-            res.json({customer: customer});
-            res.status(200)
+        if(customer == null){
+            res.status(404).json({error: "Customer not found!!!"})
         }
-        res.status(404).json({error: "Customer not found!!!"})
+        res.json({customer: customer});
+        res.status(200)
+        
     }catch(ex){
         res.status(500).json({error: ex.message});
     }
 })
 
-app.post("/api/customer", async (req, res) => {
+app.post("/api/customers", async (req, res) => {
     try{
+        
         const customer = new Customer(req.body);
         await customer.save();
         res.status(201);
@@ -57,13 +63,14 @@ app.post("/api/customer", async (req, res) => {
     
 });
 
-app.put("/api/customer/:id", async(req, res) => {
+app.put("/api/customers/:id", async(req, res) => {
+    
     try{
-        const customerID = req.params;
+        const customerID = req.params.id;
+       
+        const result =  await Customer.findOneAndUpdate({_id: customerID}, req.body, {new: true});
 
-        const result =  await Customer.replaceOne({_id: customerID}, req.body);
-
-        res.status(201).json({updateCount: result.modifiedCount});
+        res.status(201).json({result});
     }catch(ex){
         res.status(500).json({error: ex.message})
     }
@@ -71,7 +78,7 @@ app.put("/api/customer/:id", async(req, res) => {
 
 app.delete("/api/customer/:id", async(req, res)=>{
     try{
-        const customerID = req.params
+        const customerID = req.params.id;
         const result = await Customer.deleteOne({_id: customerID});
 
         res.status(201).json({deleteCount: result.deletedCount});

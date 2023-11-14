@@ -50,11 +50,12 @@ export default function Customers() {
     return (
         <>
             <h1>Here are our customers:</h1>
+        
             {customers
                 ? customers.map((customer) => {
                       return (
-                          <div className="m-2" key={customer.id}>
-                              <Link to={'/customers/' + customer.id}>
+                          <div className="m-2" key={customer._id}>
+                              <Link to={'/customers/' + customer._id}>
                                   <button className="no-underline bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
                                       {customer.name}
                                   </button>
